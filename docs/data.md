@@ -42,6 +42,18 @@ The initial `statsbomb_player_season_metrics` view derives these deterministic m
 
 Per-90 values are `NULL` when total minutes are zero. They describe calculations over this released sample, not official StatsBomb IQ metrics. A query or report may use only imported fields, and must show sample scope and data coverage rather than filling gaps with model guesses.
 
+## Sprint 2 scouting profile: ball-progressing central midfielder
+
+The deterministic profile uses only the pinned Premier League 2015/16 sample (competition `2`, season `27`, source commit `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`). These are project-defined descriptive measures, not official StatsBomb ratings or current-player recommendations.
+
+- A progressive pass or carry must have known start and end x-coordinates and advance at least 10 x-units (`end_x - start_x >= 10`). Events without sufficient coordinates do not count toward the progressive-action numerator.
+- A pass is completed when the imported StatsBomb pass event has no `pass.outcome`; the normalized `pass_completed` field records that convention. Progressive pass completion is completed progressive passes divided by progressive attempts. Overall pass completion uses completed passes divided by all pass attempts.
+- Per-90 rates divide action counts by all season minutes played, then multiply by 90. A rate or completion percentage is `NULL` if its denominator is zero. The UI displays unavailable values as an em dash. Filter thresholds use unrounded aggregate values; displayed rates are rounded for readability.
+- The profile treats position IDs `9`, `10`, `11`, `13`, `14`, and `15` as central-midfield roles. Central-midfield share is the sum of appearance minutes whose recorded primary position is in that set divided by the player's total season minutes. Because the importer stores one primary position per appearance rather than exact minutes across position intervals, role share approximates tactical role and must be interpreted cautiously.
+- The API accepts only the named profile, bounded minute/share/limit filters, and five displayed sort metrics. Sorting is stable by player name and source player ID after the selected metric; unavailable metric values sort last. There is no composite score.
+
+The web interface keeps the sample season visible and repeats the role-share and historical-scope caveats beside results. The local API and database are the only data path; this sprint makes no model/provider call.
+
 ## Validation and source limits
 
 The import verifies the pinned catalogue and 380 unique available match IDs, requires one event and lineup file per match, checks event identity uniqueness, and records file checksums. Database keys enforce unique match, appearance, and event identities. Re-importing the same revision updates existing rows without duplicating them. Unit and PostgreSQL integration tests use synthetic records and do not include StatsBomb data.

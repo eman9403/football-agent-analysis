@@ -1,0 +1,38 @@
+[
+  {
+    "name": "default",
+    "filters": {}
+  },
+  {
+    "name": "higher-minutes",
+    "filters": {
+      "min_minutes": 900,
+      "min_central_share_pct": 50,
+      "sort_by": "progressive_passes_attempted_per90"
+    }
+  },
+  {
+    "name": "higher-role-share",
+    "filters": {
+      "min_minutes": 450,
+      "min_central_share_pct": 75,
+      "sort_by": "progressive_carries_per90"
+    }
+  },
+  {
+    "name": "broad-role-share",
+    "filters": {
+      "min_minutes": 450,
+      "min_central_share_pct": 0,
+      "sort_by": "overall_pass_completion_pct"
+    }
+  },
+  {
+    "name": "high-minutes",
+    "filters": {
+      "min_minutes": 1350,
+      "min_central_share_pct": 50,
+      "sort_by": "progressive_pass_completion_pct"
+    }
+  }
+]

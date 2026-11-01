@@ -32,12 +32,14 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 
 **Outcome:** A scout can filter and compare players without AI.
 
-- [ ] Define typed, allowlisted filters and a stable response shape in FastAPI.
-- [ ] Build the query/ranking path over the Sprint 1 sample.
-- [ ] Add React filter controls, candidate results, and metric/source details.
-- [ ] Cover invalid filters, empty results, low-minute players, and missing metrics.
+- [x] Define typed, allowlisted filters and a stable response shape in FastAPI.
+- [x] Build the query/ranking path over the Sprint 1 sample.
+- [x] Add React filter controls, candidate results, and metric/source details.
+- [x] Cover invalid filters, empty results, low-minute players, and missing metrics.
 
 **Exit check:** At least five saved scouting scenarios return expected candidates and explain which data produced them.
+
+**Implemented on 2026-11-01:** Added one deterministic ball-progressing central-midfielder profile for the historical sample. The API uses bounded typed filters, explainable project-defined event metrics, stable per-metric sorting, and a pinned season/source scope. Five saved input scenarios were run twice against local PostgreSQL and their ordered results were compared in memory with filter and sort checks; candidate names, IDs, and result snapshots were not saved. Backend unit/integration tests, the Sprint 1 importer suite, invalid/empty/unavailable API checks, and the React production build passed. Browser checks covered the populated shortlist, metric sorting, an empty filter result, the PostgreSQL-unavailable message and retry path, and accessible labels/status semantics. Responsive styles were reviewed, but a rendered 375px viewport remains unverified because the available embedded-browser controls could not set that viewport. No AI/provider call or model download was added.
 
 ## Sprint 3 — Local AI assistance
 
