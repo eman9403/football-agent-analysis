@@ -5,6 +5,9 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 PNPM_BIN="${PNPM_BIN:-pnpm}"
 POSTGRES_BIN_DIR="${POSTGRES_BIN_DIR:-/Applications/Postgres.app/Contents/Versions/latest/bin}"
+API_PORT="${API_PORT:-8000}"
+UI_PORT="${UI_PORT:-5173}"
+export SCOUTING_API_PROXY_URL="${SCOUTING_API_PROXY_URL:-http://127.0.0.1:$API_PORT}"
 
 if [[ -d "$POSTGRES_BIN_DIR" ]]; then
   export PATH="$POSTGRES_BIN_DIR:$PATH"
@@ -45,9 +48,9 @@ if [[ ! -d "$PROJECT_DIR/frontend/node_modules" ]]; then
   (cd "$PROJECT_DIR/frontend" && "$PNPM_BIN" install --frozen-lockfile)
 fi
 
-(cd "$PROJECT_DIR/backend" && .venv/bin/python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000) &
+(cd "$PROJECT_DIR" && "$PROJECT_DIR/backend/.venv/bin/python" -m uvicorn backend.main:app --reload --host 127.0.0.1 --port "$API_PORT") &
 API_PID=$!
-(cd "$PROJECT_DIR/frontend" && "$PNPM_BIN" dev --host 127.0.0.1 --port 5173 --strictPort) &
+(cd "$PROJECT_DIR/frontend" && "$PNPM_BIN" dev --host 127.0.0.1 --port "$UI_PORT" --strictPort) &
 UI_PID=$!
 
 cleanup() {
@@ -55,8 +58,8 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "Workbench: http://127.0.0.1:5173"
-echo "API health: http://127.0.0.1:8000/api/health"
+echo "Workbench: http://127.0.0.1:$UI_PORT"
+echo "API health: http://127.0.0.1:$API_PORT/api/health"
 echo "Press Ctrl+C to stop both development servers."
 
 while kill -0 "$API_PID" 2>/dev/null && kill -0 "$UI_PID" 2>/dev/null; do

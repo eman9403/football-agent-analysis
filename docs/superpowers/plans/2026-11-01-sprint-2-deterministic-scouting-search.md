@@ -81,7 +81,7 @@
 - [x] Implement loading, API/database error, no-match, and populated states. On a failed request, explain how to restore the local service without presenting stale results as matching current filters.
 - [x] Keep the dark console/electric-lime design. At mobile widths, make the wide table intentionally scrollable or transform it into a readable layout; preserve visible focus and reduced-motion behavior.
 - [x] Run `pnpm --dir frontend build`. Verify the desktop layout, keyboard use of filters/sort controls, UI states, units, and historical note. The production build and browser states passed at 1280x720.
-- [ ] Verify a rendered 375px viewport. The embedded browser did not expose a viewport control; responsive styles and horizontal table scrolling were reviewed in source, but a rendered mobile check remains outstanding.
+- [x] Verify a rendered 375px viewport. The page and body remain 375px wide; the 1040px results table scrolls inside its own region.
 
 ### Task 4: Record definitions and Sprint 2 evidence
 
@@ -98,5 +98,5 @@
 - [x] Run the existing ingestion suite using its documented command and ensure Sprint 1 behavior remains intact.
 - [x] Run `pnpm --dir frontend build`.
 - [x] Run all five PostgreSQL scenarios twice and compare ordered results in memory; confirm eligibility and sorting without writing real player outputs to Git or logs.
-- [ ] Exercise API/UI at desktop and mobile widths, including invalid filters, empty results, PostgreSQL unavailable, and keyboard-only sorting. API and desktop UI states passed; the 375px rendered viewport remains unverified.
+- [x] Exercise API/UI at desktop and mobile widths, including invalid filters, empty results, PostgreSQL unavailable, and keyboard-only sorting. Desktop and rendered 375px browser checks passed; the page has no horizontal overflow and the wide table uses its own horizontal scroller.
 - [x] Confirm no AI/provider calls, model downloads, dataset files, or database exports were introduced.

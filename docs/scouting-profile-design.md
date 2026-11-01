@@ -47,7 +47,7 @@ The React shortlist should show profile and filters, a loading/error/empty state
 - At least five fixed scouting scenarios return repeatable ordered results.
 - Unit tests verify progress thresholds, completed-pass handling, per-90 calculations, minimum-role-share and minimum-minute filters, validation, and empty results.
 - Results include the metric definitions and the 2015/16 scope; no weighted score or claim about present-day players appears.
-- The UI build passes; responsive styles stack the search layout and filters, and the wide table remains horizontally scrollable. Keyboard sorting is verified. A rendered 375px viewport check remains outstanding because the available embedded-browser controls could not set that viewport.
+- The UI build passes; responsive styles stack the search layout and filters, and the wide table remains horizontally scrollable. Keyboard sorting is verified. At a rendered 375px viewport, the page and body remain 375px wide and the table scrolls inside its own results region.
 
 ## Delivered implementation
 

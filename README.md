@@ -16,6 +16,8 @@ From the repository root, run:
 
 The first run creates the `football_scouting` database if needed, installs the Python and JavaScript dependencies locally, and starts both servers. Open [http://127.0.0.1:5173](http://127.0.0.1:5173) to see the API and database status. The API response is also available at [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health). Press Ctrl+C in the terminal to stop the development servers.
 
+If the default ports are already in use, choose free local ports and the script configures the browser proxy to match: `API_PORT=8001 UI_PORT=5175 ./infra/dev.sh`.
+
 No OpenAI API key, Ollama model, or football dataset is needed for Sprint 0. If you use a different Python or PostgreSQL installation, set `PYTHON_BIN` or `POSTGRES_BIN_DIR` before running the script.
 
 ## Working stack
