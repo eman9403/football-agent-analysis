@@ -1,6 +1,6 @@
 # Repository guidance
 
-Build a local-first football scouting workbench. The current plan is in `docs/sprint-plan.md`; the application is not yet bootstrapped.
+Build a local-first football scouting workbench. The current plan is in `docs/sprint-plan.md`; Sprint 0 provides a running React, FastAPI, and PostgreSQL foundation.
 
 - Use `docs/architecture.md` when changing service boundaries or the AI workflow.
 - Use `docs/data.md` when selecting a source, changing ingestion, defining metrics, or publishing an analysis.

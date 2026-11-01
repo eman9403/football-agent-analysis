@@ -1,17 +1,19 @@
 # Sprint plan
 
-Use one-week iterations as a planning cadence; adjust the calendar to available time. Each sprint finishes with a demonstrable slice and observed checks. Sprint 0 is partly complete with this repository scaffold.
+Use one-week iterations as a planning cadence; adjust the calendar to available time. Each sprint finishes with a demonstrable slice and observed checks. Sprint 0 is complete.
 
 ## Sprint 0 — Local foundation
 
 **Outcome:** A browser page, API, and database can run together on the development Mac.
 
 - [x] Create the repository skeleton and document the working architecture, data rules, skills, and plan.
-- [ ] Bootstrap React + TypeScript and FastAPI with a health endpoint.
-- [ ] Add local PostgreSQL setup and a documented start command.
-- [ ] Make one React request to the API and show a clear success or failure state.
+- [x] Bootstrap React + TypeScript and FastAPI with a health endpoint.
+- [x] Add local PostgreSQL setup and a documented start command.
+- [x] Make one React request to the API and show a clear success or failure state.
 
 **Exit check:** A new checkout can follow the README, start the stack, and see the API status in the browser. No model or full dataset is required.
+
+**Observed on 2026-11-01:** `./infra/dev.sh` created `football_scouting` in Postgres.app and started both servers. The browser showed FastAPI and PostgreSQL as connected. Stopping PostgreSQL returned HTTP 503 with `database: unavailable`; the browser showed the database failure, then recovered after PostgreSQL restarted. With only Vite running, the browser showed the API failure. The TypeScript/Vite production build passed.
 
 ## Sprint 1 — Trustworthy football data
 

@@ -2,7 +2,21 @@
 
 A local-first football scouting workbench for exploring players in open event data. The intended result is a React interface where a scout can ask a question, inspect the filters and player metrics behind the answer, and read a report grounded in those metrics.
 
-This repository is at the **planning and skeleton** stage. There is no runnable application yet. [The sprint plan](docs/sprint-plan.md) starts with a thin end-to-end slice and adds the AI workflow only after the data and deterministic search work.
+Sprint 0 provides a running local foundation: React displays the status of FastAPI and PostgreSQL. [The sprint plan](docs/sprint-plan.md) adds football data, deterministic search, and local AI in later slices.
+
+## Run the local foundation
+
+On a Mac, install [Node.js](https://nodejs.org/en/download) 20.19+ or 22.12+, [pnpm](https://pnpm.io/installation), and Python 3.12+. Install [Postgres.app](https://postgresapp.com/documentation/install.html), open it, and click **Initialize** once. The startup script finds Postgres.app's command-line tools in its standard Applications location. It can also use PostgreSQL already on your `PATH`.
+
+From the repository root, run:
+
+```bash
+./infra/dev.sh
+```
+
+The first run creates the `football_scouting` database if needed, installs the Python and JavaScript dependencies locally, and starts both servers. Open [http://127.0.0.1:5173](http://127.0.0.1:5173) to see the API and database status. The API response is also available at [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health). Press Ctrl+C in the terminal to stop the development servers.
+
+No OpenAI API key, Ollama model, or football dataset is needed for Sprint 0. If you use a different Python or PostgreSQL installation, set `PYTHON_BIN` or `POSTGRES_BIN_DIR` before running the script.
 
 ## Working stack
 

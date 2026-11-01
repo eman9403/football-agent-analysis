@@ -13,6 +13,7 @@ __pycache__/
 
 # JavaScript
 node_modules/
+.pnpm-store/
 dist/
 build/
 coverage/

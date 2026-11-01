@@ -11,6 +11,9 @@ Codex skills are installed globally and loaded when their workflow fits the task
 | Track work as issues | `setup-matt-pocock-skills`, `to-spec`, `to-tickets`, `triage` | Configure an issue tracker before using issue-based workflows. The project currently tracks work in `docs/sprint-plan.md`; tracker-specific setup is not recorded yet. |
 | Plan a substantial change | `superpowers:brainstorming`, `superpowers:writing-plans` | Explore the design when the behavior is new, then record ordered work and completion checks before implementation. |
 | Shape service and module boundaries | `codebase-design` | Design ingestion, metrics, API, database, and model adapter interfaces before they spread across the codebase. |
+| Design the scouting interface | `ui-ux-pro-max`, `frontend-design-direction` | Set a product-specific visual direction and check layout, feedback, typography, and responsive behavior. |
+| Implement React screens | `react-patterns`, `frontend-a11y` | Keep component state clear and interactive controls accessible. |
+| Check frontend behavior and performance | `react-testing`, `react-performance` | Use when adding meaningful UI tests or diagnosing measured rendering and loading problems. |
 | Prototype an uncertain flow | `prototype` | Try a scouting interaction or state model before committing to production structure. |
 | Implement a spec or planned slice | `implement-spec`, `implement`, `superpowers:executing-plans` | Follow agreed requirements and work through an implementation plan. Use only the route that matches the artifact we actually have. |
 | Build and verify behavior | `tdd`, `superpowers:test-driven-development`, `superpowers:verification-before-completion` | Define observable behavior, add meaningful tests, and run the relevant checks before calling a slice complete. |
