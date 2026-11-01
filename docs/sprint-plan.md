@@ -19,10 +19,12 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 
 **Outcome:** A small, reproducible player dataset is queryable in PostgreSQL.
 
-- [ ] Confirm the source terms and choose a competition/season sample.
-- [ ] Import selected competition, match, lineup, and event files with source IDs and provenance.
-- [ ] Define a small set of player metrics and coverage rules from the fields actually present.
-- [ ] Add ingestion tests for joins, duplicates, missing values, and metric units.
+- [x] Review the StatsBomb source terms and choose Premier League 2015/16 (competition 2, season 27; 380 matches). StatsBomb requests Resource Centre registration; GitHub downloads are unauthenticated.
+- [x] Selectively import the pinned competition, match, lineup, and event files with source IDs and provenance into local PostgreSQL.
+- [x] Define a small set of player metrics and coverage rules from the fields actually present.
+- [x] Add ingestion tests for joins, duplicates, missing values, and metric units.
+
+**Completed on 2026-11-01:** Imported the pinned StatsBomb revision `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`: 380 matches, 10,469 appearances, 1,313,773 events, 644 rostered players, and 762 source files (1.1 GiB on disk). The 8 importer tests pass, including PostgreSQL integration; the local metrics view has 550 player-season rows, no zero-minute rows in this sample, and no invalid per-90 values. A second full import produced the same row counts. Source JSON and its checksum manifest are ignored by Git.
 
 **Exit check:** Re-running the importer from the same sample produces the same player rows and documented metrics; a query shows source competition and season.
 

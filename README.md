@@ -24,7 +24,7 @@ No OpenAI API key, Ollama model, or football dataset is needed for Sprint 0. If 
 - **API:** FastAPI and Python; it owns validation and database access.
 - **Database:** local PostgreSQL for normalized football data and derived metrics.
 - **Local AI:** Ollama, called through LangChain for question interpretation and report drafting. LangGraph is reserved for a workflow that actually needs branching or retries.
-- **Data:** [StatsBomb Open Data, hosted by Hudl](https://github.com/hudl/open-data), as the first source to assess. Its usable fields and publication terms must be checked before ingestion.
+- **Data:** [StatsBomb Open Data, hosted by Hudl](https://github.com/hudl/open-data), pinned to the Premier League 2015/16 season for Sprint 1. The sample, local import command, metric definitions, and usage terms are documented in [docs/data.md](docs/data.md).
 
 The product should run on an Apple M1 Pro with 16 GB memory without an OpenAI API key or per-call model bill. Model choice, speed, and report quality will be measured on that machine before one is adopted.
 

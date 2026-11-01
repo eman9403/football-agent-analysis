@@ -1,0 +1,10 @@
+{
+  "source_repository": "https://github.com/hudl/open-data",
+  "source_commit": "4b73468fc5b0f1950f9f66fada70ad3a4f9327cb",
+  "competition_id": 2,
+  "season_id": 27,
+  "competition_name": "Premier League",
+  "season_name": "2015/2016",
+  "expected_match_count": 380,
+  "importer_version": 1
+}
