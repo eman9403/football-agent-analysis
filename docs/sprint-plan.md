@@ -47,13 +47,15 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 
 - [x] Audit the imported event, location, outcome, possession, xG, assist, and position coverage; save repeatable aggregate SQL and findings in docs/profile-data-audit.md.
 - [x] Define candidate role pools and separate metric contracts for a progressor, chance creator, finisher, and ball-winner in docs/scouting-profile-design.md.
-- [ ] Implement the three additional allowlisted FastAPI profiles with profile-specific query metrics and stable response definitions.
-- [ ] Add profile selection and profile-specific controls, metric columns, sorting, and caveats to the React interface.
-- [ ] Add source-payload integration checks and deterministic scenarios for each profile.
+- [x] Implement the three additional allowlisted FastAPI profiles with profile-specific query metrics and stable response definitions.
+- [x] Add profile selection and profile-specific controls, metric columns, sorting, and caveats to the React interface.
+- [x] Add source-payload integration checks and deterministic scenarios for each profile.
 
 **Discovery completed on 2026-11-01:** The read-only audit of the pinned 2015/16 sample found 9,908 shots with numeric xG, 6,506 shot-assist flags, 669 goal-assist flags, and strong coverage for pressures, recoveries, interceptions, and tackle outcomes. At the shared 450-minute and 50% role-share thresholds, estimated role pools are 81 central midfielders, 68 wide/attacking creators, and 50 forwards. These are pool-size estimates; role share uses each appearance's primary position. The audit SQL is data/audit-profile-coverage.sql. No player-level result was written to Git. Search remains deterministic; no model or paid API was used.
 
-**Exit check:** All four profiles produce deterministic, role-appropriate results with visible metric definitions and data caveats. No shared composite score or present-day claim is displayed.
+**Implemented on 2026-11-01:** The API now exposes four allowlisted role profiles, with each profile's position pool, role-share filter, independent metrics, definitions, units, and default sort. The React shortlist fetches the profile catalog and renders the selected profile's metrics and sorting controls. PostgreSQL integration checks compare aggregate pass, carry, shot, assist, box-pass, pressure, recovery, interception, and tackle counts with source JSON payloads; eight saved scenarios cover all profiles and repeatability without storing player-level outputs. Backend unit tests, PostgreSQL integration tests, frontend helper tests, and the production TypeScript/Vite build passed. No model or paid API was used.
+
+**Exit check:** All four profiles produce deterministic, role-appropriate results with visible metric definitions and data caveats. No shared composite score or present-day claim is displayed. Sprint 3 is complete.
 
 ## Sprint 4 — Local AI assistance
 

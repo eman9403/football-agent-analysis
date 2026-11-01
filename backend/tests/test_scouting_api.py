@@ -12,8 +12,14 @@ class ScoutingApiTests(unittest.TestCase):
     def test_openapi_exposes_the_typed_scouting_endpoint(self):
         schema = main.app.openapi()
         self.assertIn("/api/scouting/players", schema["paths"])
+        self.assertIn("/api/scouting/profiles", schema["paths"])
         operation = schema["paths"]["/api/scouting/players"]["get"]
         self.assertEqual(operation["responses"]["200"]["description"], "Successful Response")
+
+    def test_profile_catalog_is_available_without_a_database_connection(self):
+        profiles = main.get_scouting_profiles()
+        self.assertEqual(len(profiles), 4)
+        self.assertEqual(profiles[0].profile_key, "ball_progressing_midfielder")
 
     def test_database_connection_failure_returns_503_without_candidates(self):
         endpoint = getattr(main, "get_scouting_players", None)

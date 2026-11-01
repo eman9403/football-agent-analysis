@@ -17,3 +17,7 @@ export function formatRate(value) {
 export function formatPercentage(value) {
   return value === null || value === undefined ? '—' : `${Number(value).toFixed(1)}%`
 }
+
+export function formatMetric(value, unit) {
+  return unit === 'percent' ? formatPercentage(value) : formatRate(value)
+}

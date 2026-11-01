@@ -1,48 +1,26 @@
 import { useEffect, useState } from 'react'
-import { buildScoutingUrl, formatPercentage, formatRate, nextSortDirection, type ScoutingSearchFilters, type SortMetric, type SortDirection } from './scouting-helpers.mjs'
+import { buildScoutingUrl, formatMetric, formatPercentage, nextSortDirection, type ProfileKey, type ScoutingSearchFilters, type SortMetric } from './scouting-helpers.mjs'
 
 type SearchFilters = ScoutingSearchFilters
 type ScoutingPlayer = {
   player_id: number; player_name: string; country_name: string | null; team_names: string[]; appearances: number
-  minutes_played: number; central_midfield_minutes: number; central_midfield_share_pct: number | null
-  passes_attempted: number; passes_completed: number; overall_pass_completion_pct: number | null
-  progressive_passes_attempted: number; progressive_passes_attempted_per90: number | null
-  progressive_passes_completed: number; progressive_passes_completed_per90: number | null
-  progressive_pass_completion_pct: number | null; progressive_carries: number; progressive_carries_per90: number | null
+  minutes_played: number; role_minutes: number; role_share_pct: number | null; metrics: Record<SortMetric, number | null>
 }
 type ScoutingMetricDefinition = { key: SortMetric; label: string; unit: string; definition: string }
+type ScoutingProfileSummary = {
+  profile_key: ProfileKey; profile_name: string; profile_description: string; role_group: string
+  role_label: string; position_ids: number[]; default_sort: SortMetric; metric_definitions: ScoutingMetricDefinition[]
+}
 type ScoutingResponse = {
-  profile_key: string; profile_name: string; profile_description: string
+  profile_key: ProfileKey; profile_name: string; profile_description: string; role_label: string
   scope: { competition_id: number; competition_name: string; season_id: number; season_name: string; source_commit: string; historical_note: string }
   filters: SearchFilters; metric_definitions: ScoutingMetricDefinition[]; result_count: number; results: ScoutingPlayer[]
 }
 type SearchState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'success'; data: ScoutingResponse }
 
 const defaultFilters: SearchFilters = {
-  profile: 'ball_progressing_midfielder', min_minutes: 450, min_central_share_pct: 50,
+  profile: 'ball_progressing_midfielder', min_minutes: 450, min_role_share_pct: 50,
   sort_by: 'progressive_passes_completed_per90', sort_direction: 'desc', limit: 25,
-}
-
-const fallbackMetricLabels: Record<SortMetric, string> = {
-  progressive_passes_attempted_per90: 'Progressive passes attempted / 90',
-  progressive_passes_completed_per90: 'Progressive passes completed / 90',
-  progressive_pass_completion_pct: 'Progressive pass completion (%)',
-  progressive_carries_per90: 'Progressive carries / 90',
-  overall_pass_completion_pct: 'Overall pass completion (%)',
-}
-
-const metricColumns: { key: SortMetric; value: (player: ScoutingPlayer) => number | null; format: (value: number | null) => string }[] = [
-  { key: 'progressive_passes_attempted_per90', value: (player) => player.progressive_passes_attempted_per90, format: formatRate },
-  { key: 'progressive_passes_completed_per90', value: (player) => player.progressive_passes_completed_per90, format: formatRate },
-  { key: 'progressive_pass_completion_pct', value: (player) => player.progressive_pass_completion_pct, format: formatPercentage },
-  { key: 'progressive_carries_per90', value: (player) => player.progressive_carries_per90, format: formatRate },
-  { key: 'overall_pass_completion_pct', value: (player) => player.overall_pass_completion_pct, format: formatPercentage },
-]
-
-function metricLabel(definitions: ScoutingMetricDefinition[], key: SortMetric) {
-  const definition = definitions.find((item) => item.key === key)
-  const label = definition?.label ?? fallbackMetricLabels[key]
-  return definition?.unit === 'percent' ? `${label} (%)` : label
 }
 
 function describeApiError(body: unknown, status: number) {
@@ -53,8 +31,25 @@ function describeApiError(body: unknown, status: number) {
 function ScoutingSearch() {
   const [filters, setFilters] = useState<SearchFilters>(defaultFilters)
   const [draftMinutes, setDraftMinutes] = useState(String(defaultFilters.min_minutes))
-  const [draftRoleShare, setDraftRoleShare] = useState(String(defaultFilters.min_central_share_pct))
+  const [draftRoleShare, setDraftRoleShare] = useState(String(defaultFilters.min_role_share_pct))
+  const [profiles, setProfiles] = useState<ScoutingProfileSummary[]>([])
+  const [profilesError, setProfilesError] = useState<string | null>(null)
   const [search, setSearch] = useState<SearchState>({ status: 'loading' })
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetch('/api/scouting/profiles', { signal: controller.signal })
+      .then(async (response) => {
+        const body: unknown = await response.json()
+        if (!response.ok) throw new Error(describeApiError(body, response.status))
+        setProfiles(body as ScoutingProfileSummary[])
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setProfilesError(error instanceof Error ? error.message : 'Scouting profiles could not be loaded.')
+      })
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -77,7 +72,7 @@ function ScoutingSearch() {
     const minutes = Number(draftMinutes)
     const roleShare = Number(draftRoleShare)
     if (!Number.isFinite(minutes) || !Number.isFinite(roleShare)) return
-    setFilters((current) => ({ ...current, min_minutes: minutes, min_central_share_pct: roleShare }))
+    setFilters((current) => ({ ...current, min_minutes: minutes, min_role_share_pct: roleShare }))
   }
 
   function changeSort(key: SortMetric) {
@@ -92,57 +87,75 @@ function ScoutingSearch() {
     setFilters((current) => ({ ...current }))
   }
 
+  function changeProfile(profileKey: ProfileKey) {
+    const profile = profiles.find((item) => item.profile_key === profileKey)
+    if (!profile) return
+    setFilters((current) => ({
+      ...current,
+      profile: profile.profile_key,
+      sort_by: profile.default_sort,
+      sort_direction: 'desc',
+    }))
+  }
+
   const data = search.status === 'success' ? search.data : undefined
+  const activeProfile = profiles.find((profile) => profile.profile_key === filters.profile)
+  const metricDefinitions = data?.metric_definitions ?? activeProfile?.metric_definitions ?? []
+  const sortDefinition = metricDefinitions.find((metric) => metric.key === filters.sort_by)
 
   return (
     <section className="scouting-search" id="shortlist" aria-labelledby="scouting-title">
       <div className="section-heading scouting-heading">
-        <span className="section-number">03 / PLAYER SEARCH</span>
+        <span className="section-number">03 / MULTI-PROFILE SCOUTING</span>
         <h2 id="scouting-title">Build the shortlist<span className="title-period">.</span></h2>
-        <p>Find midfielders who move the ball forward, then inspect each metric separately.</p>
+        <p>Switch between role-specific scouting lenses, then inspect the evidence and metrics that fit each role.</p>
       </div>
       <div className="scouting-workspace">
         <div className="profile-strip">
-          <div><span className="summary-label">ACTIVE PROFILE / ONE OF ONE</span><h3>{data?.profile_name ?? 'Ball-progressing central midfielder'}</h3><p>{data?.profile_description ?? 'Compare progressive passing and carrying among players used mainly in central midfield.'}</p></div>
+          <div><span className="summary-label">ACTIVE PROFILE / {String(profiles.length || 4).padStart(2, '0')} LENSES</span><h3>{data?.profile_name ?? activeProfile?.profile_name ?? 'Ball-progressing central midfielder'}</h3><p>{data?.profile_description ?? activeProfile?.profile_description ?? 'Compare players through role-specific evidence and transparent metrics.'}</p></div>
           <div className="scope-stamp"><span>DATA WINDOW</span><strong>{data ? `${data.scope.competition_name} / ${data.scope.season_name}` : 'PREMIER LEAGUE / 2015–16'}</strong></div>
         </div>
         <form className="filter-bar" onSubmit={applyFilters} aria-label="Shortlist filters">
+          <label className="filter-field profile-field"><span>SCOUTING LENS</span><select aria-label="Scouting profile" value={filters.profile} onChange={(event) => changeProfile(event.target.value as ProfileKey)} disabled={!profiles.length}>
+            {profiles.length === 0 && <option value={filters.profile}>{profilesError ? 'Profiles unavailable' : 'Loading profiles…'}</option>}
+            {profiles.map((profile) => <option key={profile.profile_key} value={profile.profile_key}>{profile.profile_name}</option>)}
+          </select></label>
           <label className="filter-field minutes-field"><span>MINIMUM MINUTES</span><input aria-label="Minimum minutes played" type="number" min="0" max="25000" step="1" value={draftMinutes} onChange={(event) => setDraftMinutes(event.target.value)} /></label>
-          <label className="filter-field role-field"><span>MINIMUM CENTRAL-MIDFIELD SHARE <b>{draftRoleShare}%</b></span><input aria-label="Minimum central midfield role share" type="range" min="0" max="100" step="5" value={draftRoleShare} onChange={(event) => setDraftRoleShare(event.target.value)} /></label>
+          <label className="filter-field role-field"><span>MINIMUM {activeProfile?.role_label.toUpperCase() ?? 'ROLE'} SHARE <b>{draftRoleShare}%</b></span><input aria-label="Minimum role share" type="range" min="0" max="100" step="5" value={draftRoleShare} onChange={(event) => setDraftRoleShare(event.target.value)} /></label>
           <button className="apply-filters" type="submit">UPDATE SHORTLIST <span aria-hidden="true">↗</span></button>
         </form>
         <div className="shortlist-toolbar">
           <div><span className="step-id">PLAYERS SHOWN</span><strong>{data ? String(data.result_count).padStart(2, '0') : '—'}</strong></div>
-          <p>Ordered by <b>{data ? metricLabel(data.metric_definitions, filters.sort_by) : metricLabel([], filters.sort_by)}</b> · {filters.sort_direction === 'desc' ? 'highest first' : 'lowest first'}</p>
+          <p>Ordered by <b>{sortDefinition?.label ?? filters.sort_by}</b> · {filters.sort_direction === 'desc' ? 'highest first' : 'lowest first'}</p>
           {data && <span className="result-scope">{data.scope.competition_name} · {data.scope.season_name}</span>}
         </div>
         {search.status === 'loading' && <div className="search-state" role="status" aria-live="polite"><span className="state-pip" />Gathering season evidence for this profile…</div>}
         {search.status === 'error' && <div className="search-state search-error" role="alert"><div><strong>SHORTLIST UNAVAILABLE</strong><p>{search.message}</p></div><button type="button" className="retry-button" onClick={retry}>TRY AGAIN</button></div>}
-        {data && data.results.length === 0 && <div className="search-state empty-state" role="status"><div><strong>No players meet these filters.</strong><p>Lower the minutes or central-midfield share threshold to widen the search.</p></div></div>}
+        {data && data.results.length === 0 && <div className="search-state empty-state" role="status"><div><strong>No players meet these filters.</strong><p>Lower the minutes or {data.role_label.toLowerCase()} share threshold to widen the search.</p></div></div>}
         {data && data.results.length > 0 && (
           <div className="table-scroll" role="region" aria-label="Scouting shortlist results" tabIndex={0}>
             <table className="shortlist-table">
               <caption>{data.profile_name} — {data.scope.competition_name}, {data.scope.season_name}. Historical sample; not a current-player recommendation.</caption>
               <thead><tr>
                 <th scope="col" className="player-column">PLAYER</th><th scope="col" className="club-column">CLUB</th>
-                <th scope="col" aria-label="Appearances">APP</th><th scope="col" aria-label="Minutes played">MINS</th><th scope="col" aria-label="Central midfield minutes share, percent">CM ROLE (%)</th>
-                {metricColumns.map((column) => <th key={column.key} scope="col" aria-sort={filters.sort_by === column.key ? (filters.sort_direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                  <button type="button" className="sort-button" onClick={() => changeSort(column.key)} title={data.metric_definitions.find((item) => item.key === column.key)?.definition ?? ''}>
-                    {metricLabel(data.metric_definitions, column.key)}<span aria-hidden="true">{filters.sort_by === column.key ? (filters.sort_direction === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</span>
+                <th scope="col" aria-label="Appearances">APP</th><th scope="col" aria-label="Minutes played">MINS</th><th scope="col" aria-label={`${data.role_label} role share, percent`}>ROLE (%)</th>
+                {data.metric_definitions.map((metric) => <th key={metric.key} scope="col" aria-sort={filters.sort_by === metric.key ? (filters.sort_direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                  <button type="button" className="sort-button" onClick={() => changeSort(metric.key)} title={metric.definition}>
+                    {metric.label}{metric.unit === 'percent' ? ' (%)' : ''}<span aria-hidden="true">{filters.sort_by === metric.key ? (filters.sort_direction === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</span>
                   </button>
                 </th>)}
               </tr></thead>
               <tbody>{data.results.map((player, index) => (
                 <tr key={player.player_id}>
                   <td className="player-cell"><span className="rank">{String(index + 1).padStart(2, '0')}</span><span><strong>{player.player_name}</strong>{player.country_name && <small>{player.country_name}</small>}</span></td>
-                  <td>{player.team_names.join(' / ') || '—'}</td><td className="numeric">{player.appearances}</td><td className="numeric">{Math.round(player.minutes_played).toLocaleString('en-GB')}</td><td className="numeric">{formatPercentage(player.central_midfield_share_pct)}</td>
-                  {metricColumns.map((column) => <td key={column.key} className={`numeric ${filters.sort_by === column.key ? 'active-metric' : ''}`}>{column.format(column.value(player))}</td>)}
+                  <td>{player.team_names.join(' / ') || '—'}</td><td className="numeric">{player.appearances}</td><td className="numeric">{Math.round(player.minutes_played).toLocaleString('en-GB')}</td><td className="numeric">{formatPercentage(player.role_share_pct)}</td>
+                  {data.metric_definitions.map((metric) => <td key={metric.key} className={`numeric ${filters.sort_by === metric.key ? 'active-metric' : ''}`}>{formatMetric(player.metrics[metric.key], metric.unit)}</td>)}
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
-        {data && <p className="historical-note"><span aria-hidden="true">i</span>{data.scope.historical_note} Central-midfield share approximates season role from the primary position recorded per appearance. Metrics are descriptive and do not adjust for role, team tactics or opponent strength; an em dash means a rate has no valid denominator in this sample.</p>}
+        {data && <p className="historical-note"><span aria-hidden="true">i</span>{data.scope.historical_note} Role share approximates season usage from the primary position recorded per appearance. Metrics are descriptive and do not adjust for role, team tactics or opponent strength; an em dash means a rate has no valid denominator in this sample.</p>}
       </div>
     </section>
   )
@@ -214,7 +227,7 @@ function App() {
       <main>
         <section className="console" aria-labelledby="page-title">
           <div className="console-copy">
-            <div className="section-index"><span>01 / THE WORKSPACE</span><span>SPRINT 2 — PLAYER SEARCH</span></div>
+            <div className="section-index"><span>01 / THE WORKSPACE</span><span>SPRINT 3 — MULTI-PROFILE SCOUTING</span></div>
             <p className="kicker">FOOTBALL / EVIDENCE / DECISIONS</p>
             <h1 id="page-title">THE<br /><em>SCOUTING</em><br />DESK<span className="title-period">.</span></h1>
             <p className="console-intro">A sharper view of the game starts with trustworthy data. This is the local base for player search, comparison and evidence-backed reports.</p>
@@ -243,7 +256,7 @@ function App() {
           </div>
         </section>
       </main>
-      <footer className="footer"><span>TOUCHLINE / SCOUTING INTELLIGENCE</span><span>LOCAL DATA · SPRINT 2</span></footer>
+      <footer className="footer"><span>TOUCHLINE / SCOUTING INTELLIGENCE</span><span>LOCAL DATA · SPRINT 3</span></footer>
     </div>
   )
 }

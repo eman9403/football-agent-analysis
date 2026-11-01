@@ -1,38 +1,59 @@
 [
   {
-    "name": "default",
+    "name": "progressing-midfielder-default",
     "filters": {}
   },
   {
-    "name": "higher-minutes",
-    "filters": {
-      "min_minutes": 900,
-      "min_central_share_pct": 50,
-      "sort_by": "progressive_passes_attempted_per90"
-    }
-  },
-  {
-    "name": "higher-role-share",
-    "filters": {
-      "min_minutes": 450,
-      "min_central_share_pct": 75,
-      "sort_by": "progressive_carries_per90"
-    }
-  },
-  {
-    "name": "broad-role-share",
-    "filters": {
-      "min_minutes": 450,
-      "min_central_share_pct": 0,
-      "sort_by": "overall_pass_completion_pct"
-    }
-  },
-  {
-    "name": "high-minutes",
+    "name": "progressing-midfielder-high-minutes",
     "filters": {
       "min_minutes": 1350,
-      "min_central_share_pct": 50,
+      "min_role_share_pct": 75,
       "sort_by": "progressive_pass_completion_pct"
+    }
+  },
+  {
+    "name": "chance-creator-default",
+    "filters": {
+      "profile": "chance_creating_attacker"
+    }
+  },
+  {
+    "name": "chance-creator-shot-assists",
+    "filters": {
+      "profile": "chance_creating_attacker",
+      "min_minutes": 900,
+      "min_role_share_pct": 60,
+      "sort_by": "goal_assists_per90"
+    }
+  },
+  {
+    "name": "forward-finisher-default",
+    "filters": {
+      "profile": "forward_finisher"
+    }
+  },
+  {
+    "name": "forward-finisher-volume",
+    "filters": {
+      "profile": "forward_finisher",
+      "min_minutes": 900,
+      "min_role_share_pct": 75,
+      "sort_by": "shots_per90"
+    }
+  },
+  {
+    "name": "ball-winning-midfielder-default",
+    "filters": {
+      "profile": "ball_winning_midfielder"
+    }
+  },
+  {
+    "name": "ball-winning-midfielder-pressure-volume",
+    "filters": {
+      "profile": "ball_winning_midfielder",
+      "min_minutes": 900,
+      "min_role_share_pct": 60,
+      "sort_by": "pressures_per90"
     }
   }
 ]

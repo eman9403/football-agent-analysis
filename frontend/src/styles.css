@@ -99,13 +99,14 @@ h2 { font-family: 'Barlow Condensed', Impact, sans-serif; font-size: clamp(36px,
 .scope-stamp span, .scope-stamp strong { display: block; }
 .scope-stamp span { color: #96a296; font-size: 9px; font-weight: 700; letter-spacing: .14em; }
 .scope-stamp strong { margin-top: 7px; font-size: 10px; letter-spacing: .06em; line-height: 1.5; color: var(--lime); }
-.filter-bar { display: grid; grid-template-columns: minmax(130px, .62fr) minmax(180px, 1fr) 180px; gap: 24px; align-items: end; padding: 22px 28px; border-bottom: 1px solid var(--line); }
+.filter-bar { display: grid; grid-template-columns: minmax(210px, 1.15fr) minmax(120px, .62fr) minmax(200px, 1fr) 180px; gap: 18px; align-items: end; padding: 22px 28px; border-bottom: 1px solid var(--line); }
 .filter-field { min-width: 0; display: flex; flex-direction: column; gap: 11px; color: #a7b2a7; font-size: 9px; font-weight: 700; letter-spacing: .1em; }
 .filter-field span { display: flex; justify-content: space-between; gap: 10px; }
 .filter-field b { color: var(--lime); font-size: 11px; }
 .filter-field input[type=number] { width: 100%; min-height: 41px; border: 1px solid #465047; border-radius: 0; outline: 0; background: #101512; color: #f2f3eb; padding: 0 12px; font: 600 14px 'DM Sans', sans-serif; font-variant-numeric: tabular-nums; }
+.filter-field select { width: 100%; min-height: 41px; border: 1px solid #465047; border-radius: 0; outline: 0; appearance: none; background: #101512; color: #f2f3eb; padding: 0 32px 0 12px; font: 600 12px 'DM Sans', sans-serif; background-image: linear-gradient(45deg, transparent 50%, var(--lime) 50%), linear-gradient(135deg, var(--lime) 50%, transparent 50%); background-position: calc(100% - 16px) 17px, calc(100% - 11px) 17px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
 .filter-field input[type=range] { width: 100%; height: 41px; accent-color: var(--lime); cursor: pointer; }
-.filter-field input:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+.filter-field input:focus-visible, .filter-field select:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 .apply-filters { min-height: 43px; padding: 0 15px; border: 0; background: var(--lime); color: #172000; display: flex; justify-content: space-between; align-items: center; gap: 14px; font-size: 10px; font-weight: 800; letter-spacing: .07em; cursor: pointer; transition: background .18s ease; }
 .apply-filters span { font-size: 17px; }
 .apply-filters:hover { background: #e6ff86; }

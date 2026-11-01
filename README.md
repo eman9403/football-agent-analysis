@@ -2,7 +2,7 @@
 
 A local-first football scouting workbench for exploring players in open event data. The intended result is a React interface where a scout can ask a question, inspect the filters and player metrics behind the answer, and read a report grounded in those metrics.
 
-The app has a running React, FastAPI, and PostgreSQL foundation, a local StatsBomb sample, and a deterministic ball-progressing midfielder search. Sprint 3 is planned around adding several explainable role-specific profiles before local AI. See the [sprint plan](docs/sprint-plan.md), [profile data audit](docs/profile-data-audit.md), and [profile definitions](docs/scouting-profile-design.md).
+The app has a running React, FastAPI, and PostgreSQL foundation, a local StatsBomb sample, and four deterministic, explainable role-specific scouting profiles. Local AI is planned as a separate next sprint. See the [sprint plan](docs/sprint-plan.md), [profile data audit](docs/profile-data-audit.md), and [profile definitions](docs/scouting-profile-design.md).
 
 ## Run the local foundation
 

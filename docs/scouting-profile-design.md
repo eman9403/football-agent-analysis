@@ -1,6 +1,6 @@
 # Multi-profile scouting design
 
-**Status:** Sprint 3 discovery complete; additional profiles are specified but not implemented.
+**Status:** Sprint 3 implemented. The API and React shortlist expose all four profiles described below.
 
 **Scope:** The pinned StatsBomb Premier League 2015/16 sample only. See the [data audit](profile-data-audit.md) for observed coverage.
 
@@ -21,7 +21,7 @@ All profiles are descriptive views of this released historical sample. They are 
 
 ## Profile contracts
 
-The profile keys and role pools below are proposals for Sprint 3 implementation. Position names are the labels observed in the imported lineups. Pool sizes are estimates at the shared thresholds, not player recommendations.
+The profile keys and role pools below are the implemented allowlist. Position names are the labels observed in the imported lineups. Pool sizes are estimates at the shared thresholds, not player recommendations.
 
 ### Ball-progressing central midfielder
 
@@ -29,7 +29,7 @@ The profile keys and role pools below are proposals for Sprint 3 implementation.
 
 **Estimated pool:** 81 players.
 
-**Status:** Implemented in Sprint 2.
+**Status:** Implemented in Sprint 2; exposed beside the three additional profiles in Sprint 3.
 
 - Progressive passes attempted and completed per 90. A pass is progressive when its known end x is at least 10 coordinate units beyond its start x.
 - Progressive pass completion: completed progressive passes divided by progressive attempts.
@@ -83,7 +83,7 @@ All 9,908 shots in the audited sample have numeric source xG. The initial profil
 
 Keep raw event volume and coded outcomes distinct. Pressure volume alone is not a measure of pressure success. The source's recovery-failure flag is present on only some recovery events, so do not treat a missing flag as verified success.
 
-## API and interface behavior for Sprint 3
+## API and interface behavior in Sprint 3
 
 - Return an allowlisted profile library with a distinct name, description, role pool, filters, metrics, units, definitions, and historical scope for each profile.
 - Reject unknown profiles, unsupported metrics, and invalid filter ranges.
@@ -91,10 +91,12 @@ Keep raw event volume and coded outcomes distinct. Pressure volume alone is not 
 - Keep each metric independently sortable; use a visible profile-specific default metric. There is no cross-profile or shared composite score.
 - Include the source season and evidence notes beside results. Show a clear empty state and keep the deterministic shortlist usable when any later local model is unavailable.
 
+`GET /api/scouting/profiles` returns the profile catalog without needing a database connection. `GET /api/scouting/players` accepts `profile`, `min_minutes`, `min_role_share_pct`, `sort_by`, `sort_direction`, and `limit`. Its response contains the active profile description, role label, metric definitions, historical scope, selected filters, and players with season minutes, role minutes, role share, and the profile's metric values. Sort keys are validated against the selected profile; changing profile in the UI selects that profile's default sort.
+
 ## Acceptance checks
 
-- The four profile contracts above are implemented with typed, allowlisted filters and deterministic Postgres queries.
+- The four profile contracts above are implemented with typed, allowlisted filters and deterministic Postgres aggregates.
 - Each metric has unit tests for numerator, denominator, missing evidence, and outcomes; integration tests compare aggregates with source JSON for representative event types.
-- Saved deterministic scenarios cover all profiles, role/minute thresholds, sorting, empty results, and repeatability.
+- Eight saved deterministic scenarios cover all profiles, role/minute thresholds, sorting, empty results, and repeatability. Integration tests cross-check source payload counts across event families.
 - The UI exposes profile-specific metric labels and definitions, makes the historical scope visible, and never shows one aggregate score across roles.
 - No current-day, causal, off-ball, or predictive claim is made from this sample.

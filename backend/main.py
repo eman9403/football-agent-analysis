@@ -6,9 +6,11 @@ from fastapi import FastAPI, HTTPException, Query, Response, status
 
 from backend.scouting import (
     ScoutingFilters,
+    ScoutingProfileSummary,
     ScoutingResponse,
     build_scouting_response,
     fetch_player_aggregates,
+    list_scouting_profiles,
 )
 
 
@@ -32,6 +34,11 @@ def health(response: Response) -> dict[str, str]:
         return {"api": "ok", "database": "unavailable"}
 
     return {"api": "ok", "database": "ok"}
+
+
+@app.get("/api/scouting/profiles", response_model=list[ScoutingProfileSummary])
+def get_scouting_profiles() -> list[ScoutingProfileSummary]:
+    return list_scouting_profiles()
 
 
 @app.get("/api/scouting/players", response_model=ScoutingResponse)
