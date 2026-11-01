@@ -1,0 +1,59 @@
+# Sprint plan
+
+Use one-week iterations as a planning cadence; adjust the calendar to available time. Each sprint finishes with a demonstrable slice and observed checks. Sprint 0 is partly complete with this repository scaffold.
+
+## Sprint 0 — Local foundation
+
+**Outcome:** A browser page, API, and database can run together on the development Mac.
+
+- [x] Create the repository skeleton and document the working architecture, data rules, skills, and plan.
+- [ ] Bootstrap React + TypeScript and FastAPI with a health endpoint.
+- [ ] Add local PostgreSQL setup and a documented start command.
+- [ ] Make one React request to the API and show a clear success or failure state.
+
+**Exit check:** A new checkout can follow the README, start the stack, and see the API status in the browser. No model or full dataset is required.
+
+## Sprint 1 — Trustworthy football data
+
+**Outcome:** A small, reproducible player dataset is queryable in PostgreSQL.
+
+- [ ] Confirm the source terms and choose a competition/season sample.
+- [ ] Import selected competition, match, lineup, and event files with source IDs and provenance.
+- [ ] Define a small set of player metrics and coverage rules from the fields actually present.
+- [ ] Add ingestion tests for joins, duplicates, missing values, and metric units.
+
+**Exit check:** Re-running the importer from the same sample produces the same player rows and documented metrics; a query shows source competition and season.
+
+## Sprint 2 — Deterministic scouting search
+
+**Outcome:** A scout can filter and compare players without AI.
+
+- [ ] Define typed, allowlisted filters and a stable response shape in FastAPI.
+- [ ] Build the query/ranking path over the Sprint 1 sample.
+- [ ] Add React filter controls, candidate results, and metric/source details.
+- [ ] Cover invalid filters, empty results, low-minute players, and missing metrics.
+
+**Exit check:** At least five saved scouting scenarios return expected candidates and explain which data produced them.
+
+## Sprint 3 — Local AI assistance
+
+**Outcome:** Natural-language questions become inspectable filters and evidence-backed summaries.
+
+- [ ] Benchmark candidate Ollama models on the M1 Pro for memory, latency, and filter accuracy.
+- [ ] Use LangChain to produce typed filters; reject or repair invalid outputs in the API.
+- [ ] Draft short reports from retrieved rows with metric units and source context.
+- [ ] Create a fixed evaluation set covering valid questions, unsupported attributes, ambiguous requests, and factual report claims.
+
+**Exit check:** Compare the selected model against the deterministic scenarios, record quality and latency, and show a report whose factual claims trace to returned data. Search still works when Ollama is unavailable.
+
+## Sprint 4 — Production habits
+
+**Outcome:** The local app is repeatable, observable, and safe to extend.
+
+- [ ] Add structured logs, request IDs, model/prompt versions, and failure visibility.
+- [ ] Add appropriate caching and timeouts after measuring slow paths.
+- [ ] Run unit, integration, and evaluation checks in CI where local-model requirements permit.
+- [ ] Write a short local runbook covering startup, data refresh, model download/removal, backup, and recovery.
+- [ ] Decide from observed workflow complexity whether LangGraph adds value.
+
+**Exit check:** Another developer can start the app, load the sample, run checks, inspect a failed request, and reproduce a scouting answer using the documented versioned inputs.

@@ -1,0 +1,32 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript
+node_modules/
+dist/
+build/
+coverage/
+
+# Local datasets, models, and generated evaluations
+data/raw/
+data/processed/
+data/cache/
+models/
+evals/results/
+*.gguf
+*.sqlite3
+
+# Editor and OS
+.DS_Store
+.idea/
+.vscode/
