@@ -41,7 +41,21 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 
 **Implemented on 2026-11-01:** Added one deterministic ball-progressing central-midfielder profile for the historical sample. The API uses bounded typed filters, explainable project-defined event metrics, stable per-metric sorting, and a pinned season/source scope. Five saved input scenarios were run twice against local PostgreSQL and their ordered results were compared in memory with filter and sort checks; candidate names, IDs, and result snapshots were not saved. Backend unit/integration tests, the Sprint 1 importer suite, invalid/empty/unavailable API checks, and the React production build passed. Browser checks covered the populated shortlist, metric sorting, an empty filter result, the PostgreSQL-unavailable message and retry path, accessible labels/status semantics, and a rendered 375px viewport; at 375px the page stays within the viewport and the wide table scrolls within its results region. No AI/provider call or model download was added.
 
-## Sprint 3 — Local AI assistance
+## Sprint 3 — Explainable multi-profile scouting
+
+**Outcome:** A scout can compare role-specific shortlists using evidence and metrics that fit each role.
+
+- [x] Audit the imported event, location, outcome, possession, xG, assist, and position coverage; save repeatable aggregate SQL and findings in docs/profile-data-audit.md.
+- [x] Define candidate role pools and separate metric contracts for a progressor, chance creator, finisher, and ball-winner in docs/scouting-profile-design.md.
+- [ ] Implement the three additional allowlisted FastAPI profiles with profile-specific query metrics and stable response definitions.
+- [ ] Add profile selection and profile-specific controls, metric columns, sorting, and caveats to the React interface.
+- [ ] Add source-payload integration checks and deterministic scenarios for each profile.
+
+**Discovery completed on 2026-11-01:** The read-only audit of the pinned 2015/16 sample found 9,908 shots with numeric xG, 6,506 shot-assist flags, 669 goal-assist flags, and strong coverage for pressures, recoveries, interceptions, and tackle outcomes. At the shared 450-minute and 50% role-share thresholds, estimated role pools are 81 central midfielders, 68 wide/attacking creators, and 50 forwards. These are pool-size estimates; role share uses each appearance's primary position. The audit SQL is data/audit-profile-coverage.sql. No player-level result was written to Git. Search remains deterministic; no model or paid API was used.
+
+**Exit check:** All four profiles produce deterministic, role-appropriate results with visible metric definitions and data caveats. No shared composite score or present-day claim is displayed.
+
+## Sprint 4 — Local AI assistance
 
 **Outcome:** Natural-language questions become inspectable filters and evidence-backed summaries.
 
@@ -50,9 +64,9 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 - [ ] Draft short reports from retrieved rows with metric units and source context.
 - [ ] Create a fixed evaluation set covering valid questions, unsupported attributes, ambiguous requests, and factual report claims.
 
-**Exit check:** Compare the selected model against the deterministic scenarios, record quality and latency, and show a report whose factual claims trace to returned data. Search still works when Ollama is unavailable.
+**Exit check:** Compare the selected model against deterministic scenarios, record quality and latency, and show a report whose factual claims trace to returned data. Search still works when Ollama is unavailable.
 
-## Sprint 4 — Production habits
+## Sprint 5 — Production habits
 
 **Outcome:** The local app is repeatable, observable, and safe to extend.
 

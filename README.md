@@ -2,7 +2,7 @@
 
 A local-first football scouting workbench for exploring players in open event data. The intended result is a React interface where a scout can ask a question, inspect the filters and player metrics behind the answer, and read a report grounded in those metrics.
 
-Sprint 0 provides a running local foundation: React displays the status of FastAPI and PostgreSQL. [The sprint plan](docs/sprint-plan.md) adds football data, deterministic search, and local AI in later slices.
+The app has a running React, FastAPI, and PostgreSQL foundation, a local StatsBomb sample, and a deterministic ball-progressing midfielder search. Sprint 3 is planned around adding several explainable role-specific profiles before local AI. See the [sprint plan](docs/sprint-plan.md), [profile data audit](docs/profile-data-audit.md), and [profile definitions](docs/scouting-profile-design.md).
 
 ## Run the local foundation
 
@@ -39,6 +39,6 @@ The product should run on an Apple M1 Pro with 16 GB memory without an OpenAI AP
 | [`data/`](data/README.md) | Ingestion code and local data workspace |
 | [`evals/`](evals/README.md) | Repeatable AI and data-quality checks |
 | [`infra/`](infra/README.md) | Local runtime setup |
-| [`docs/`](docs/README.md) | Architecture, data rules, skill use, and sprints |
+| [`docs/`](docs/README.md) | Architecture, data rules, profile audit, skill use, and sprints |
 
 Start with [Sprint 0](docs/sprint-plan.md). Repository guidance for Codex is in [AGENTS.md](AGENTS.md).

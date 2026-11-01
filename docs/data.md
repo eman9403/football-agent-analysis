@@ -54,6 +54,8 @@ The deterministic profile uses only the pinned Premier League 2015/16 sample (co
 
 The web interface keeps the sample season visible and repeats the role-share and historical-scope caveats beside results. The local API and database are the only data path; this sprint makes no model/provider call.
 
+Sprint 3's read-only event-coverage audit and proposed role-specific metric contracts are documented in the [profile data audit](profile-data-audit.md) and [scouting profile design](scouting-profile-design.md). The audit SQL prints aggregates only. The additional profiles are specified for implementation; the API currently implements only the Sprint 2 midfielder profile.
+
 ## Validation and source limits
 
 The import verifies the pinned catalogue and 380 unique available match IDs, requires one event and lineup file per match, checks event identity uniqueness, and records file checksums. Database keys enforce unique match, appearance, and event identities. Re-importing the same revision updates existing rows without duplicating them. Unit and PostgreSQL integration tests use synthetic records and do not include StatsBomb data.

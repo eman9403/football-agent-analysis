@@ -1,57 +1,100 @@
-# Scouting profile design: ball-progressing central midfielder
+# Multi-profile scouting design
 
-**Status:** Approved and implemented in Sprint 2
-**Product slice:** Sprint 2 — deterministic scouting search
+**Status:** Sprint 3 discovery complete; additional profiles are specified but not implemented.
 
-## Goal
+**Scope:** The pinned StatsBomb Premier League 2015/16 sample only. See the [data audit](profile-data-audit.md) for observed coverage.
 
-Let a scout build an explainable shortlist of players who mainly played central midfield in the imported Premier League 2015/16 sample and compare how often they advanced the ball. The shortlist describes that historical sample; it is not a recommendation about current players.
+## Product goal
 
-The first profile is one entry in a profile library. The data/query shape should allow later profiles for chance-creating wingers and forwards without introducing a composite score shared by every role.
+Give a scout several role-specific shortlists, each with its own candidate pool and visible evidence. A profile is a lens for a particular job on the pitch, not a universal ranking of players. The existing ball-progressing midfielder remains the first implemented profile.
 
-## Candidate pool
+All profiles are descriptive views of this released historical sample. They are not current-player recommendations, predictions, or official StatsBomb ratings. Do not calculate one weighted score across roles.
 
-- Treat StatsBomb position IDs `9`, `10`, `11`, `13`, `14`, and `15` as defensive and central midfield roles. This is based on the position names in the StatsBomb specification and the imported lineups.
-- Include a player when at least 50% of their season minutes were assigned to those roles, and they played at least 450 minutes. Both thresholds are adjustable in the UI.
-- The current importer keeps one primary position per appearance, rather than exact minutes for every position interval. The role-share measure therefore approximates a player's season role; show it in the results and document that limitation.
+## Shared candidate rules
 
-## Metrics shown separately
+- Default minimum playing time: 450 season minutes.
+- Default role share: at least 50% of season minutes in the profile's selected primary-position appearances.
+- Show minutes and role share in every result. Keep both thresholds adjustable and validate them in FastAPI.
+- The importer calculates minutes from position intervals but stores the dominant position for each appearance. Role share is therefore an approximation and can hide role changes within an appearance.
+- Use season minutes for per-90 denominators. Keep null values when a denominator is zero; never fill missing evidence with a model guess.
+- Put the competition, season, source revision, metric units, and caveats in every API response.
 
-Use the player’s season minutes as the per-90 denominator. Do not calculate an overall scouting score.
+## Profile contracts
 
-- **Progressive passes attempted / 90:** pass events whose end x-coordinate is at least 10 units farther toward the attacking goal than their start x-coordinate.
-- **Progressive passes completed / 90:** the same action threshold, limited to passes with no StatsBomb pass outcome.
-- **Progressive pass completion:** completed progressive passes divided by progressive passes attempted.
-- **Progressive carries / 90:** carry events whose end x-coordinate is at least 10 units farther toward the attacking goal than their start x-coordinate.
-- **Overall pass completion:** completed passes divided by all pass attempts.
-- **Context:** minutes played, central-midfield role share, team(s), appearances, competition, and season.
+The profile keys and role pools below are proposals for Sprint 3 implementation. Position names are the labels observed in the imported lineups. Pool sizes are estimates at the shared thresholds, not player recommendations.
 
-The role-share control uses the same primary-position approximation as the candidate pool: minutes in appearances whose recorded position is one of the selected midfield roles divided by all season minutes. The importer does not retain exact time in every position interval, so this is a useful filter rather than a precise tactical-role measurement. The interface displays the share and this caveat beside the results.
+### Ball-progressing central midfielder
 
-These are project-defined metrics calculated from source events, not official StatsBomb ratings. StatsBomb's [open-data specification](https://github.com/hudl/open-data/blob/master/doc/StatsBomb%20Open%20Data%20Specification%20v1.1.pdf) defines pass and carry end locations and the relevant position IDs. Hudl's [event-data filter guide](https://support.hudl.com/s/article/filter-event-data-statsbomb?language=en_US) uses x values above 102 for the attacking penalty area, so increasing x is treated as movement toward goal. Coordinates or missing event details that cannot be evaluated are excluded from the numerator, never guessed.
+**Role pool:** IDs 9, 10, 11, 13, 14, and 15: defensive and central midfield positions.
 
-The default order is progressive passes completed per 90. Users can sort by any displayed performance measure, so the ordering rule remains visible and there is no hidden weighting.
+**Estimated pool:** 81 players.
 
-## Interface and API behavior
+**Status:** Implemented in Sprint 2.
 
-- Return one allowlisted profile (`ball_progressing_midfielder`) with its definition and available metrics.
-- Accept a profile key, minimum minutes, minimum central-midfield share, result limit, and an allowlisted sort metric.
-- Reject unknown profiles, unsupported sort metrics, and out-of-range filter values with a clear validation error.
-- Return a stable result shape with metric values, units, data scope, and definitions so the UI and later report generation use the same evidence.
-- Show the historical season prominently. Keep this slice deterministic; no model call or generated ranking is involved.
+- Progressive passes attempted and completed per 90. A pass is progressive when its known end x is at least 10 coordinate units beyond its start x.
+- Progressive pass completion: completed progressive passes divided by progressive attempts.
+- Progressive carries per 90, using the same known-coordinate and 10-unit threshold.
+- Overall pass completion as context.
 
-The React shortlist should show profile and filters, a loading/error/empty state, and a responsive results table with separate metric columns. Every column heading should explain its unit and sort action accessibly.
+Passes are completed when the source pass has no outcome. End coordinates come from the event payload. Do not infer missing locations or role labels.
+
+### Chance-creating wide or attacking player
+
+**Key:** `chance_creating_attacker`
+
+**Role pool:** IDs 17 (Right Wing), 19 (Center Attacking Midfield), 20 (Left Attacking Midfield), and 21 (Left Wing).
+
+**Estimated pool:** 68 players.
+
+- Passes flagged as shot assists per 90.
+- Passes flagged as goal assists per 90.
+- Completed passes ending in the project-defined attacking box per 90: end x at least 102 and end y between 18 and 62.
+- Progressive carries per 90 as a separate ball-carrying measure.
+
+There is no xA field in this sample. Do not call shot assists expected assists or treat a goal-assist count as a complete creativity measure. Keep shot assists and goal assists separate, and show their event definitions.
+
+### Forward finisher
+
+**Key:** `forward_finisher`
+
+**Role pool:** IDs 22 (Right Center Forward), 23 (Center Forward), and 24 (Left Center Forward).
+
+**Estimated pool:** 50 players.
+
+- Shots per 90.
+- Source-provided xG per 90, summing the numeric StatsBomb xG attached to a player's shots.
+- Goals per 90.
+- xG per shot, unavailable when the player has no shots.
+
+All 9,908 shots in the audited sample have numeric source xG. The initial profile includes the source's shot mix; it must not label the metric non-penalty xG unless a penalty exclusion field is separately verified. Goals and xG are outcomes in this season, not a projection of future finishing.
+
+### Ball-winning central midfielder
+
+**Key:** `ball_winning_midfielder`
+
+**Role pool:** IDs 9, 10, 11, 13, 14, and 15: the same broad central-midfield pool as the progressor profile.
+
+**Estimated pool:** 81 players.
+
+- Pressure events per 90.
+- Ball Recovery events per 90; label these as recorded recoveries, not successful recoveries.
+- Interceptions per 90, plus the share whose recorded outcome is `Won`, `Success In Play`, or `Success Out`.
+- Tackle duels per 90, where a Duel event has subtype Tackle, plus the share with those same positive coded outcomes.
+
+Keep raw event volume and coded outcomes distinct. Pressure volume alone is not a measure of pressure success. The source's recovery-failure flag is present on only some recovery events, so do not treat a missing flag as verified success.
+
+## API and interface behavior for Sprint 3
+
+- Return an allowlisted profile library with a distinct name, description, role pool, filters, metrics, units, definitions, and historical scope for each profile.
+- Reject unknown profiles, unsupported metrics, and invalid filter ranges.
+- Let a scout switch profiles without carrying incompatible sort fields or filters across them.
+- Keep each metric independently sortable; use a visible profile-specific default metric. There is no cross-profile or shared composite score.
+- Include the source season and evidence notes beside results. Show a clear empty state and keep the deterministic shortlist usable when any later local model is unavailable.
 
 ## Acceptance checks
 
-- At least five fixed scouting scenarios return repeatable ordered results.
-- Unit tests verify progress thresholds, completed-pass handling, per-90 calculations, minimum-role-share and minimum-minute filters, validation, and empty results.
-- Results include the metric definitions and the 2015/16 scope; no weighted score or claim about present-day players appears.
-- The UI build passes; responsive styles stack the search layout and filters, and the wide table remains horizontally scrollable. Keyboard sorting is verified. At a rendered 375px viewport, the page and body remain 375px wide and the table scrolls inside its own results region.
-
-## Delivered implementation
-
-- Deterministic allowlisted FastAPI query and response model; invalid profile, metric, or filter values receive validation errors.
-- Focused backend unit and local PostgreSQL integration tests for the metric rules, filters, stable ordering, and empty results.
-- React controls and keyboard-operable, separately sortable metric columns with loading, error, and empty states.
-- Five saved filter scenarios verified against the imported local database. No generated shortlist or player output is persisted in Git.
+- The four profile contracts above are implemented with typed, allowlisted filters and deterministic Postgres queries.
+- Each metric has unit tests for numerator, denominator, missing evidence, and outcomes; integration tests compare aggregates with source JSON for representative event types.
+- Saved deterministic scenarios cover all profiles, role/minute thresholds, sorting, empty results, and repeatability.
+- The UI exposes profile-specific metric labels and definitions, makes the historical scope visible, and never shows one aggregate score across roles.
+- No current-day, causal, off-ball, or predictive claim is made from this sample.
