@@ -41,8 +41,9 @@ fi
 
 if [[ ! -x "$PROJECT_DIR/backend/.venv/bin/python" ]]; then
   "$PYTHON_BIN" -m venv "$PROJECT_DIR/backend/.venv"
-  "$PROJECT_DIR/backend/.venv/bin/python" -m pip install -r "$PROJECT_DIR/backend/requirements.txt"
 fi
+
+"$PROJECT_DIR/backend/.venv/bin/python" -m pip install -r "$PROJECT_DIR/backend/requirements.txt"
 
 if [[ ! -d "$PROJECT_DIR/frontend/node_modules" ]]; then
   (cd "$PROJECT_DIR/frontend" && "$PNPM_BIN" install --frozen-lockfile)

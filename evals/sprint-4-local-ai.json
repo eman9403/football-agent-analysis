@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "description": "Fixed, player-free cases for checking local question interpretation and report evidence selection.",
+  "filter_cases": [
+    {
+      "id": "progressive-passing-default",
+      "question": "Find central midfielders who complete the most progressive passes per 90.",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "ball_progressing_midfielder", "sort_by": "progressive_passes_completed_per90", "sort_direction": "desc"}
+    },
+    {
+      "id": "chance-creation-minutes",
+      "question": "Show wide attackers ranked by shot assists per 90, with at least 600 minutes.",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "chance_creating_attacker", "sort_by": "shot_assists_per90", "min_minutes": 600, "sort_direction": "desc"}
+    },
+    {
+      "id": "forward-xg",
+      "question": "Which forwards generated the most xG per 90 after 900 minutes?",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "forward_finisher", "sort_by": "expected_goals_per90", "min_minutes": 900, "sort_direction": "desc"}
+    },
+    {
+      "id": "ball-winning-tackles",
+      "question": "Rank ball-winning midfielders by tackle duels per 90, lowest first.",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "ball_winning_midfielder", "sort_by": "tackle_duels_per90", "sort_direction": "asc"}
+    },
+    {
+      "id": "role-share-threshold",
+      "question": "Find forwards with at least 70 percent of minutes in their role and 500 minutes overall.",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "forward_finisher", "min_role_share_pct": 70, "min_minutes": 500}
+    },
+    {
+      "id": "progressive-carries",
+      "question": "For central midfielders, sort by progressive carries per 90 and show the highest first.",
+      "expected_decision": "apply",
+      "expected_filters": {"profile": "ball_progressing_midfielder", "sort_by": "progressive_carries_per90", "sort_direction": "desc"}
+    },
+    {
+      "id": "ambiguous-best",
+      "question": "Find me the best player.",
+      "expected_decision": "clarify"
+    },
+    {
+      "id": "ambiguous-creator",
+      "question": "Find a creator.",
+      "expected_decision": "clarify"
+    },
+    {
+      "id": "unsupported-footedness",
+      "question": "Find left-footed forwards.",
+      "expected_decision": "unsupported"
+    },
+    {
+      "id": "unsupported-xa",
+      "question": "Rank wingers by expected assists (xA).",
+      "expected_decision": "unsupported"
+    },
+    {
+      "id": "unsupported-current-season",
+      "question": "Find the best current Premier League striker this season.",
+      "expected_decision": "unsupported"
+    },
+    {
+      "id": "unsupported-wages",
+      "question": "Show forwards earning less than fifty thousand pounds a week.",
+      "expected_decision": "unsupported"
+    },
+    {
+      "id": "unsupported-injuries",
+      "question": "Which midfielders are injury-free right now?",
+      "expected_decision": "unsupported"
+    }
+  ],
+  "report_contract": {
+    "player_specific_results_in_source": false,
+    "required_evidence_fields": ["metric_key", "player_value", "unit", "definition", "peer_median", "peer_percentile", "peer_count", "competition", "season", "source_commit"],
+    "reject_unknown_metric_keys": true,
+    "reject_claims_without_evidence": true,
+    "all_numbers_rendered_by_api_from_retrieved_metrics": true
+  }
+}

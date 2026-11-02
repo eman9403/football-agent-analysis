@@ -17,6 +17,12 @@ type ScoutingResponse = {
   filters: SearchFilters; metric_definitions: ScoutingMetricDefinition[]; result_count: number; results: ScoutingPlayer[]
 }
 type SearchState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'success'; data: ScoutingResponse }
+type LocalAiStatus = { state: 'ready' | 'runtime_missing' | 'model_missing' | 'remote_disallowed'; model: string; base_url: string; installed_models: string[]; detail: string }
+type FilterInterpretationResult = { status: 'ready' | 'clarify' | 'unsupported'; message: string; proposed_filters: SearchFilters | null }
+type InterpretationState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'success'; data: FilterInterpretationResult }
+type ReportClaim = { category: 'strength' | 'watchpoint' | 'context'; metric_key: string; label: string; statement: string; player_value: number; unit: string; peer_median: number; peer_percentile: number; peer_count: number; definition: string; competition: string; season: string; source_commit: string }
+type PlayerReport = { player: ScoutingPlayer; profile_key: ProfileKey; profile_name: string; role_label: string; scope: ScoutingResponse['scope']; peer_count: number; selected_by: 'ollama' | 'rule_based'; draft_note: string; claims: ReportClaim[] }
+type ReportState = { status: 'loading'; player_id: number } | { status: 'error'; message: string } | { status: 'success'; data: PlayerReport }
 
 const defaultFilters: SearchFilters = {
   profile: 'ball_progressing_midfielder', min_minutes: 450, min_role_share_pct: 50,
@@ -35,6 +41,10 @@ function ScoutingSearch() {
   const [profiles, setProfiles] = useState<ScoutingProfileSummary[]>([])
   const [profilesError, setProfilesError] = useState<string | null>(null)
   const [search, setSearch] = useState<SearchState>({ status: 'loading' })
+  const [aiStatus, setAiStatus] = useState<LocalAiStatus | null>(null)
+  const [question, setQuestion] = useState('')
+  const [interpretation, setInterpretation] = useState<InterpretationState | null>(null)
+  const [report, setReport] = useState<ReportState | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -50,6 +60,23 @@ function ScoutingSearch() {
       })
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetch('/api/ai/status', { signal: controller.signal })
+      .then(async (response) => {
+        const body: unknown = await response.json()
+        if (!response.ok) throw new Error(describeApiError(body, response.status))
+        setAiStatus(body as LocalAiStatus)
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setAiStatus({ state: 'runtime_missing', model: 'qwen3.5:4b', base_url: 'http://127.0.0.1:11434', installed_models: [], detail: error instanceof Error ? error.message : 'Local model status could not be checked.' })
+      })
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => { setReport(null) }, [filters])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -98,6 +125,60 @@ function ScoutingSearch() {
     }))
   }
 
+  async function refreshAiStatus() {
+    try {
+      const response = await fetch('/api/ai/status')
+      const body: unknown = await response.json()
+      if (!response.ok) throw new Error(describeApiError(body, response.status))
+      setAiStatus(body as LocalAiStatus)
+    } catch (error) {
+      setAiStatus({ state: 'runtime_missing', model: aiStatus?.model ?? 'qwen3.5:4b', base_url: aiStatus?.base_url ?? 'http://127.0.0.1:11434', installed_models: [], detail: error instanceof Error ? error.message : 'Local model status could not be checked.' })
+    }
+  }
+
+  async function submitQuestion(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setInterpretation({ status: 'loading' })
+    try {
+      const response = await fetch('/api/ai/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, active_filters: filters }),
+      })
+      const body: unknown = await response.json()
+      if (!response.ok) throw new Error(describeApiError(body, response.status))
+      setInterpretation({ status: 'success', data: body as FilterInterpretationResult })
+    } catch (error) {
+      setInterpretation({ status: 'error', message: error instanceof Error ? error.message : 'The local model could not interpret that request.' })
+      void refreshAiStatus()
+    }
+  }
+
+  function applyInterpretation() {
+    if (interpretation?.status !== 'success' || interpretation.data.status !== 'ready' || !interpretation.data.proposed_filters) return
+    const proposed = interpretation.data.proposed_filters
+    setDraftMinutes(String(proposed.min_minutes))
+    setDraftRoleShare(String(proposed.min_role_share_pct))
+    setFilters(proposed)
+    setInterpretation(null)
+  }
+
+  async function openDossier(player: ScoutingPlayer) {
+    setReport({ status: 'loading', player_id: player.player_id })
+    try {
+      const response = await fetch('/api/reports/player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: player.player_id, filters }),
+      })
+      const body: unknown = await response.json()
+      if (!response.ok) throw new Error(describeApiError(body, response.status))
+      setReport({ status: 'success', data: body as PlayerReport })
+    } catch (error) {
+      setReport({ status: 'error', message: error instanceof Error ? error.message : 'The evidence dossier could not be built.' })
+    }
+  }
+
   const data = search.status === 'success' ? search.data : undefined
   const activeProfile = profiles.find((profile) => profile.profile_key === filters.profile)
   const metricDefinitions = data?.metric_definitions ?? activeProfile?.metric_definitions ?? []
@@ -124,6 +205,26 @@ function ScoutingSearch() {
           <label className="filter-field role-field"><span>MINIMUM {activeProfile?.role_label.toUpperCase() ?? 'ROLE'} SHARE <b>{draftRoleShare}%</b></span><input aria-label="Minimum role share" type="range" min="0" max="100" step="5" value={draftRoleShare} onChange={(event) => setDraftRoleShare(event.target.value)} /></label>
           <button className="apply-filters" type="submit">UPDATE SHORTLIST <span aria-hidden="true">↗</span></button>
         </form>
+        <div className="ai-assist">
+          <div className="ai-assist-heading">
+            <div><span className="summary-label">LOCAL AI / QUESTION TO FILTERS</span><h3>Ask the scouting desk.</h3><p>Your question becomes a filter proposal. Review it before it changes the shortlist.</p></div>
+            <span className={`ai-model-state ${aiStatus?.state === 'ready' ? 'available' : ''}`}><i aria-hidden="true" />{aiStatus?.state === 'ready' ? `LOCAL / ${aiStatus.model}` : aiStatus?.state === 'model_missing' ? 'MODEL NOT DOWNLOADED' : aiStatus?.state === 'remote_disallowed' ? 'ENDPOINT BLOCKED' : 'OLLAMA NOT RUNNING'}</span>
+          </div>
+          <form className="ai-question-form" onSubmit={submitQuestion}>
+            <label className="ai-question-label" htmlFor="scout-question">SCOUT QUESTION</label>
+            <textarea id="scout-question" value={question} onChange={(event) => { setQuestion(event.target.value); setInterpretation(null) }} placeholder="For example: find forwards with the highest xG per 90 after 900 minutes" maxLength={1000} />
+            <div className="ai-question-actions"><span>Only the four available scouting lenses and their listed metrics are supported.</span><button className="apply-filters" type="submit" disabled={!aiStatus || aiStatus.state !== 'ready' || question.trim().length < 3 || interpretation?.status === 'loading'}>{interpretation?.status === 'loading' ? 'READING QUESTION…' : 'INTERPRET QUESTION'} <span aria-hidden="true">↗</span></button></div>
+          </form>
+          {aiStatus && aiStatus.state !== 'ready' && <div className="ai-setup-note"><p>{aiStatus.detail} {aiStatus.state === 'runtime_missing' ? 'Local AI is optional; manual search and evidence dossiers still work. If you choose to enable it, the starter model download is about 4 GB.' : aiStatus.state === 'model_missing' ? 'Local AI is optional; download the model only when you want question interpretation.' : 'Set the Ollama endpoint to this machine if you intend to use local AI.'}</p>{aiStatus.state !== 'remote_disallowed' && <><code>ollama pull {aiStatus.model}</code><div><a href="https://ollama.com/download" target="_blank" rel="noreferrer">GET OLLAMA <span aria-hidden="true">↗</span></a><button type="button" onClick={() => void refreshAiStatus()}>CHECK AGAIN</button></div></>}</div>}
+          {interpretation?.status === 'loading' && <div className="ai-result-state" role="status">Interpreting the question with the local model…</div>}
+          {interpretation?.status === 'error' && <div className="ai-result-state ai-result-error" role="alert">{interpretation.message}</div>}
+          {interpretation?.status === 'success' && <div className={`interpretation-preview interpretation-${interpretation.data.status}`} role="status">
+            <div><span className="step-id">{interpretation.data.status === 'ready' ? 'FILTER PROPOSAL / REVIEW BEFORE APPLYING' : interpretation.data.status === 'clarify' ? 'CLARIFICATION NEEDED' : 'OUTSIDE THIS DATASET'}</span><p>{interpretation.data.message}</p>
+              {interpretation.data.proposed_filters && <dl className="proposal-filters"><div><dt>PROFILE</dt><dd>{profiles.find((item) => item.profile_key === interpretation.data.proposed_filters?.profile)?.profile_name ?? interpretation.data.proposed_filters.profile}</dd></div><div><dt>MINUTES</dt><dd>{interpretation.data.proposed_filters.min_minutes}</dd></div><div><dt>ROLE SHARE</dt><dd>{interpretation.data.proposed_filters.min_role_share_pct}%</dd></div><div><dt>RANK BY</dt><dd>{metricDefinitions.find((item) => item.key === interpretation.data.proposed_filters?.sort_by)?.label ?? interpretation.data.proposed_filters.sort_by} · {interpretation.data.proposed_filters.sort_direction}</dd></div></dl>}
+            </div>
+            {interpretation.data.status === 'ready' && <button type="button" className="apply-filters" onClick={applyInterpretation}>APPLY PROPOSAL <span aria-hidden="true">↗</span></button>}
+          </div>}
+        </div>
         <div className="shortlist-toolbar">
           <div><span className="step-id">PLAYERS SHOWN</span><strong>{data ? String(data.result_count).padStart(2, '0') : '—'}</strong></div>
           <p>Ordered by <b>{sortDefinition?.label ?? filters.sort_by}</b> · {filters.sort_direction === 'desc' ? 'highest first' : 'lowest first'}</p>
@@ -143,18 +244,27 @@ function ScoutingSearch() {
                   <button type="button" className="sort-button" onClick={() => changeSort(metric.key)} title={metric.definition}>
                     {metric.label}{metric.unit === 'percent' ? ' (%)' : ''}<span aria-hidden="true">{filters.sort_by === metric.key ? (filters.sort_direction === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</span>
                   </button>
-                </th>)}
+                </th>)}<th scope="col">REPORT</th>
               </tr></thead>
               <tbody>{data.results.map((player, index) => (
                 <tr key={player.player_id}>
                   <td className="player-cell"><span className="rank">{String(index + 1).padStart(2, '0')}</span><span><strong>{player.player_name}</strong>{player.country_name && <small>{player.country_name}</small>}</span></td>
                   <td>{player.team_names.join(' / ') || '—'}</td><td className="numeric">{player.appearances}</td><td className="numeric">{Math.round(player.minutes_played).toLocaleString('en-GB')}</td><td className="numeric">{formatPercentage(player.role_share_pct)}</td>
                   {data.metric_definitions.map((metric) => <td key={metric.key} className={`numeric ${filters.sort_by === metric.key ? 'active-metric' : ''}`}>{formatMetric(player.metrics[metric.key], metric.unit)}</td>)}
+                  <td className="report-action-cell"><button type="button" className="dossier-button" onClick={() => void openDossier(player)} disabled={report?.status === 'loading'} aria-label={`Open evidence dossier for ${player.player_name}`}>{report?.status === 'loading' && report.player_id === player.player_id ? 'BUILDING…' : 'DOSSIER ↗'}</button></td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
+        {report?.status === 'loading' && <div className="report-loading" role="status">Building the dossier from the current eligible peer group…</div>}
+        {report?.status === 'error' && <div className="search-state search-error" role="alert"><div><strong>DOSSIER UNAVAILABLE</strong><p>{report.message}</p></div></div>}
+        {report?.status === 'success' && <section className="report-panel" aria-labelledby="report-title">
+          <div className="report-header"><div><span className="summary-label">05 / REPORTING LENS · {report.data.selected_by === 'ollama' ? 'LOCAL MODEL DRAFT' : 'EVIDENCE-ONLY DRAFT'}</span><h3 id="report-title">{report.data.player.player_name}<span className="title-period">.</span></h3><p>{report.data.profile_name} · {report.data.scope.competition_name} / {report.data.scope.season_name} · {report.data.peer_count} eligible peers</p></div><button className="report-close" type="button" onClick={() => setReport(null)} aria-label="Close dossier">CLOSE ×</button></div>
+          <p className="report-note">{report.data.draft_note}</p>
+          <div className="report-claims">{report.data.claims.map((claim) => <article className={`report-claim report-${claim.category}`} key={claim.metric_key}><span className="report-category">{claim.category.toUpperCase()} / {claim.peer_percentile.toFixed(1)}TH PERCENTILE</span><h4>{claim.label}</h4><p>{claim.statement}</p><details><summary>METRIC DEFINITION & SOURCE</summary><p>{claim.definition}</p><small>{claim.competition} · {claim.season} · StatsBomb revision {claim.source_commit.slice(0, 10)}</small></details></article>)}</div>
+          <p className="report-footnote">A historical, role-filtered comparison within the 2015/16 open-data sample. Percentiles describe this eligible peer group only; they are not a current-player recommendation or a quality score.</p>
+        </section>}
         {data && <p className="historical-note"><span aria-hidden="true">i</span>{data.scope.historical_note} Role share approximates season usage from the primary position recorded per appearance. Metrics are descriptive and do not adjust for role, team tactics or opponent strength; an em dash means a rate has no valid denominator in this sample.</p>}
       </div>
     </section>
@@ -227,7 +337,7 @@ function App() {
       <main>
         <section className="console" aria-labelledby="page-title">
           <div className="console-copy">
-            <div className="section-index"><span>01 / THE WORKSPACE</span><span>SPRINT 3 — MULTI-PROFILE SCOUTING</span></div>
+            <div className="section-index"><span>01 / THE WORKSPACE</span><span>SPRINT 4 — LOCAL AI + REPORTING LENS</span></div>
             <p className="kicker">FOOTBALL / EVIDENCE / DECISIONS</p>
             <h1 id="page-title">THE<br /><em>SCOUTING</em><br />DESK<span className="title-period">.</span></h1>
             <p className="console-intro">A sharper view of the game starts with trustworthy data. This is the local base for player search, comparison and evidence-backed reports.</p>
@@ -252,11 +362,11 @@ function App() {
           <div className="pipeline-steps">
             <article><span className="step-id">01 — SOURCE</span><h3>Trusted match data</h3><p>Record where every event and metric came from.</p></article>
             <article><span className="step-id">02 — SEARCH</span><h3>Clear player comparisons</h3><p>Filter candidates and see the evidence side by side.</p></article>
-            <article><span className="step-id">03 — REPORT</span><h3>Explain the decision</h3><p>Use a local model to draft grounded scouting notes.</p></article>
+            <article><span className="step-id">03 — REPORT</span><h3>Explain the decision</h3><p>Use local AI to select relevant evidence; the API supplies every value and source.</p></article>
           </div>
         </section>
       </main>
-      <footer className="footer"><span>TOUCHLINE / SCOUTING INTELLIGENCE</span><span>LOCAL DATA · SPRINT 3</span></footer>
+      <footer className="footer"><span>TOUCHLINE / SCOUTING INTELLIGENCE</span><span>LOCAL DATA · SPRINT 4</span></footer>
     </div>
   )
 }

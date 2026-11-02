@@ -61,10 +61,12 @@ Use one-week iterations as a planning cadence; adjust the calendar to available 
 
 **Outcome:** Natural-language questions become inspectable filters and evidence-backed summaries.
 
-- [ ] Benchmark candidate Ollama models on the M1 Pro for memory, latency, and filter accuracy.
-- [ ] Use LangChain to produce typed filters; reject or repair invalid outputs in the API.
-- [ ] Draft short reports from retrieved rows with metric units and source context.
-- [ ] Create a fixed evaluation set covering valid questions, unsupported attributes, ambiguous requests, and factual report claims.
+- [ ] Benchmark candidate Ollama models on the M1 Pro for memory, latency, and filter accuracy with the fixed harness.
+- [x] Use LangChain to produce typed filters; reject or repair invalid outputs in the API.
+- [x] Draft evidence-first dossiers from role-filtered metrics with units and source context.
+- [x] Create a fixed evaluation set covering supported requests, unsupported attributes, ambiguous requests, and report evidence.
+
+**Implemented on 2026-11-02:** Added optional local Ollama status, LangChain structured filter interpretation, a manual review/apply gate, and evidence dossiers whose metric statements and peer comparisons are computed and validated in FastAPI. If Ollama is absent, manual search and deterministic evidence-only dossiers continue to work. Added 13 fixed question cases and a repeatable benchmark harness for exact filter accuracy, median/p95 latency, Ollama process RSS, and loaded-model size. The LangChain integration and schema construct successfully; unit/API tests and the frontend production build pass. Ollama is not installed and no model was downloaded, so the real M1 Pro benchmark and model-quality measurement remain outstanding; see docs/local-ai.md.
 
 **Exit check:** Compare the selected model against deterministic scenarios, record quality and latency, and show a report whose factual claims trace to returned data. Search still works when Ollama is unavailable.
 

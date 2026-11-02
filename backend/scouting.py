@@ -621,7 +621,7 @@ def sort_players(
     return valued + missing
 
 
-def build_player_results(
+def build_eligible_player_pool(
     aggregates: list[PlayerSeasonAggregate],
     filters: ScoutingFilters,
 ) -> list[ScoutingPlayer]:
@@ -635,7 +635,14 @@ def build_player_results(
         if role_share_pct < filters.min_role_share_pct:
             continue
         candidates.append(_build_scouting_player(aggregate, profile))
-    return sort_players(candidates, filters)[: filters.limit]
+    return candidates
+
+
+def build_player_results(
+    aggregates: list[PlayerSeasonAggregate],
+    filters: ScoutingFilters,
+) -> list[ScoutingPlayer]:
+    return sort_players(build_eligible_player_pool(aggregates, filters), filters)[: filters.limit]
 
 
 def build_scouting_response(
